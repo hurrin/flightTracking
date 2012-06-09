@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Application xmlns:fx="http://ns.adobe.com/mxml/2009"
+			   xmlns:s="library://ns.adobe.com/flex/spark"
+			   xmlns:mx="library://ns.adobe.com/flex/mx"
+			   xmlns:ns="http://openscales.org"
+			   width="100%" height="100%"
+			   creationComplete="init()"
+			   currentState="mapViewState" xmlns:dialogs="dialogs.*">
+	
+	<s:states>
+		<s:State name="mapViewState"/>
+		<s:State name="infoDialogState"/>
+	</s:states>
+	
+	<s:transitions>
+		
+		<s:Transition fromState="mapViewState" toState="infoDialogState" >
+			<s:Sequence>
+				<s:Parallel>
+					
+					<s:Fade target="{infoDialog}" />
+					<s:Move target="{infoDialog}" yFrom="-200"/>
+					
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		
+		<s:Transition fromState="infoDialogState" toState="mapViewState" >
+			<s:Sequence>
+				<s:Parallel>
+					
+					<s:Fade target="{infoDialog}" />
+					<s:Move target="{infoDialog}" yTo="-200" />
+					
+				</s:Parallel>
+			</s:Sequence>
+		</s:Transition>
+		
+	</s:transitions>
+	
+	<fx:Declarations>
+		<!-- Place non-visual elements (e.g., services, value objects) here -->
+		
+		<!-- connection to gateway service -->
+		<s:ChannelSet id="channels">
+			<s:AMFChannel id="pyamf" uri="http://127.0.0.1:8000/gateway/"/>
+		</s:ChannelSet>
+		<s:RemoteObject id="getPlanePosService"
+						channelSet="{channels}" 
+						destination="myservice"
+						showBusyCursor="true"
+						>
+			<!--<s:method name="saveEmail" 
+					  result="onSaveEmailSuccess(event)"
+					  fault="onFault(event)"/>  
+			
+			<s:method name="getEmailList" 
+					  result="onEmailListSuccess(event)"
+					  fault="onFault(event)"/>  -->
+		</s:RemoteObject>
+		
+		
+	</fx:Declarations>
+	
+	
+	<fx:Script>
+		<![CDATA[
+			import dto.Airport;
+			import dto.Flight;
+			import dto.Plane;
+			
+			import events.FlightEvent;
+			
+			import mx.controls.Alert;
+			import mx.skins.halo.WindowBackground;
+			
+			import org.openscales.core.Map;
+			import org.openscales.core.layer.VectorLayer;
+			import org.openscales.geometry.basetypes.Location;
+			import org.openscales.proj4as.ProjProjection;
+			
+			import service.ObjectsManager;
+
+			private var objectsManager:ObjectsManager;
+			private static const MAP_VIEW_STATE:String = "mapViewState";
+			private static const INFO_DIALOG_STATE:String = "infoDialogState";
+			
+			private function init():void {	
+				objectsManager = ObjectsManager.instance;
+								
+				if( fxMap.map is Map ){
+					objectsManager.map = fxMap.map as Map;
+				}
+				objectsManager.drawLayer = new VectorLayer("geometryLayer");
+				objectsManager.map.addLayer(objectsManager.drawLayer);
+				objectsManager.map.addEventListener(FlightEvent.SEND_FLIGHT_INFO, showInfoDialog );
+				
+				setData();
+			}
+			
+			private function setData():void {
+				
+				// testowe dane
+				// dane powinny tworzne na podstawie informacji pobranych z backendu
+				var arp1:Airport = new Airport("lotnisko1", new Location(11.324642, 50.012353, new ProjProjection("EPSG:900913")));
+				var arp2:Airport = new Airport("lotnisko2", new Location(19.324642, 50.012353, new ProjProjection("EPSG:900913")));
+				var plane:Plane = new Plane("BEOING767", 0, 0, new Location(12.268157,45.401855, new ProjProjection("EPSG:900913")));
+				var flt:Flight = new Flight(1,"LOT", arp1, arp2, plane);
+				
+				objectsManager.addObject(flt);
+				objectsManager.addObject(arp1);
+				objectsManager.addObject(arp2);
+				
+			}
+			
+			private function showInfoDialog(e:FlightEvent):void {
+				if( currentState == MAP_VIEW_STATE ){
+					setCurrentState(INFO_DIALOG_STATE);
+					infoDialog.setData(e.flight);	
+				} else if( currentState == INFO_DIALOG_STATE ){
+					setCurrentState(MAP_VIEW_STATE);
+				}
+					
+			}
+			
+		]]>
+	</fx:Script>
+
+	<ns:Map id="fxMap" width="100%" height="100%" resolution="5000,EPSG:900913" center="10.268157,48.401855" projection="EPSG:900913">
+		<ns:Mapnik id="mapnikLayer" name="Mapnik" />
+		
+		<ns:WheelHandler />
+		<ns:DragHandler/>
+		
+		<ns:ScaleLine x="{width-110}" y="{height-80}"
+					  color="#000000"/>
+		<ns:Zoom x="{fxMap.width-135}" y="10"
+				 color="#000000"/>
+		<dialogs:FlightInfoDialog id="infoDialog" includeIn="infoDialogState" x="20" y="150"/>
+		
+	</ns:Map>
+</s:Application>
