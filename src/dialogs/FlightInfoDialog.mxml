@@ -5,13 +5,16 @@
 		 width="200" height="286"
 		 creationComplete="init()">
 	
-	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
 	</fx:Declarations>
 	
 	<fx:Script>
 		<![CDATA[
+			/**
+			 * This class represents a small window which appears when user clicks on a plane.
+			 * It shows him informations about the flight and plane.
+			 */			
 			import dto.Flight;
 			
 			[Bindable]
@@ -35,12 +38,12 @@
 			
 			
 			private function init():void {
-				
+				// TODO ?? czy potrzebne ??
 			}
 			
 			
 			/**
-			 * Uzupelnia okienko danymi. Dane sa przesylane poprzez event object
+			 * Fills window with specified flight informations.
 			 */
 			public function setData(flight:Flight):void {
 				_planeId = flight.plane.aircraft;

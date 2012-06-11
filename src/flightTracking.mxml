@@ -40,26 +40,6 @@
 	
 	<fx:Declarations>
 		<!-- Place non-visual elements (e.g., services, value objects) here -->
-		
-		<!-- connection to gateway service -->
-		<s:ChannelSet id="channels">
-			<s:AMFChannel id="pyamf" uri="http://127.0.0.1:8000/gateway/"/>
-		</s:ChannelSet>
-		<s:RemoteObject id="getPlanePosService"
-						channelSet="{channels}" 
-						destination="myservice"
-						showBusyCursor="true"
-						>
-			<!--<s:method name="saveEmail" 
-					  result="onSaveEmailSuccess(event)"
-					  fault="onFault(event)"/>  
-			
-			<s:method name="getEmailList" 
-					  result="onEmailListSuccess(event)"
-					  fault="onFault(event)"/>  -->
-		</s:RemoteObject>
-		
-		
 	</fx:Declarations>
 	
 	
@@ -79,39 +59,42 @@
 			import org.openscales.geometry.basetypes.Location;
 			import org.openscales.proj4as.ProjProjection;
 			
+			import service.BackendService;
 			import service.ObjectsManager;
 
-			private var objectsManager:ObjectsManager;
 			private static const MAP_VIEW_STATE:String = "mapViewState";
 			private static const INFO_DIALOG_STATE:String = "infoDialogState";
+
+			private var _objectsManager:ObjectsManager;
+			private var _refreshTimer:Timer;
 			
 			private function init():void {	
-				objectsManager = ObjectsManager.instance;
-								
-				if( fxMap.map is Map ){
-					objectsManager.map = fxMap.map as Map;
-				}
-				objectsManager.drawLayer = new VectorLayer("geometryLayer");
-				objectsManager.map.addLayer(objectsManager.drawLayer);
-				objectsManager.map.addEventListener(FlightEvent.SEND_FLIGHT_INFO, showInfoDialog );
+				_objectsManager = ObjectsManager.instance;
 				
-				setData();
+				// the TimerEvent would be dispatched every 2 seconds
+				// This behaviour will be repeated until stop() function will be called
+				_refreshTimer = new Timer(2000);
+				_refreshTimer.addEventListener(TimerEvent.TIMER, onTimerEvent);
+						
+				// configuring map
+				if( fxMap.map is Map ){
+					_objectsManager.map = fxMap.map as Map;
+				}
+				_objectsManager.drawLayer = new VectorLayer("geometryLayer");
+				_objectsManager.map.addLayer(_objectsManager.drawLayer);
+				_objectsManager.map.addEventListener(FlightEvent.SEND_FLIGHT_INFO, showInfoDialog );
+				
+				// populating map with objects
+				_objectsManager.initializeMap();
 			}
 			
-			private function setData():void {
-				
-				// testowe dane
-				// dane powinny tworzne na podstawie informacji pobranych z backendu
-				var arp1:Airport = new Airport("lotnisko1", new Location(11.324642, 50.012353, new ProjProjection("EPSG:900913")));
-				var arp2:Airport = new Airport("lotnisko2", new Location(19.324642, 50.012353, new ProjProjection("EPSG:900913")));
-				var plane:Plane = new Plane("BEOING767", 0, 0, new Location(12.268157,45.401855, new ProjProjection("EPSG:900913")));
-				var flt:Flight = new Flight(1,"LOT", arp1, arp2, plane);
-				
-				objectsManager.addObject(flt);
-				objectsManager.addObject(arp1);
-				objectsManager.addObject(arp2);
-				
+			/**
+			 * Refreshing planes positions 
+			 */
+			private function onTimerEvent(e:TimerEvent):void {
+				_objectsManager.refreshPlanesCoords();
 			}
+			
 			
 			private function showInfoDialog(e:FlightEvent):void {
 				if( currentState == MAP_VIEW_STATE ){

@@ -3,7 +3,7 @@ package dto
 	import org.openscales.geometry.basetypes.Location;
 
 	/**
-	 * Klasa reprezentujaca samolot. 
+	 * Class representing airplane
 	 * @author Adamus
 	 * 
 	 */	

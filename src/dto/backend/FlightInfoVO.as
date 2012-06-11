@@ -1,9 +1,10 @@
 package dto.backend
 {
-	
+	[RemoteClass(alias = "dto.backend.FlightInfoVO")]
 	/**
-	 * Class used to communication between backend and fronted. It exchanges essential informations
-	 * to present object on map
+	 * Class used to communication between backend and fronted. It contains essential informations
+	 * to present object on map. Objects of this type are sent when frontend request for actual
+	 * flights between airports.
 	 * @author Adamus
 	 * 
 	 */	
@@ -31,24 +32,7 @@ package dto.backend
 		 * Plane ID
 		 */		
 		public var aircraft:String;
-		/**
-		 * Plane height above the sea level 
-		 */		
-		public var altitiude:Number;
-		/**
-		 * Plane speed  
-		 */		
-		public var speed:Number;
-		/**
-		 * Coordinates, Latitude 
-		 */		
-		public var positionX:Number;
-		/**
-		 * Coordinates, Longitude 
-		 */		
-		public var positionY:Number;
+
 		
-		public function FlightInfoVO() {
-		}
 	}
 }
